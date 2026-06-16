@@ -1,0 +1,26 @@
+{
+	"id": "kiloview-cuber1",
+	"name": "Kiloview CUBE R1",
+	"shortname": "cuber1",
+	"description": "Module to control Kiloview CUBE R1 multi-channel NDI recorder devices with full API integration",
+	"version": "1.0.0",
+	"license": "MIT",
+	"repository": "git+https://github.com/bitfocus/companion-module-kiloview-cuber1.git",
+	"bugs": "https://github.com/bitfocus/companion-module-kiloview-cuber1/issues",
+	"maintainers": [
+		{
+			"name": "Larry",
+			"email": "068@kiloview.com"
+		}
+	],
+	"legacyIds": [],
+	"runtime": {
+		"type": "node18",
+		"api": "nodejs-ipc",
+		"apiVersion": "0.0.0",
+		"entrypoint": "../index.js"
+	},
+	"manufacturer": "Kiloview",
+	"products": ["CUBE R1"],
+	"keywords": ["Kiloview", "CUBE R1", "NDI", "Multi-channel", "Recorder"]
+}
