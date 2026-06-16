@@ -1,6 +1,6 @@
 const { InstanceStatus } = require('@companion-module/base')
 
-const cuber1Device = require('./cuber1')
+const cuber1Device = require('./kiloview')
 
 module.exports = {
 	async initConnection() {
