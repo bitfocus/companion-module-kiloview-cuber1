@@ -210,11 +210,12 @@ module.exports = {
 			const output = await self.DEVICE.getOutput()
 			if (output && output.data) {
 				self.STATE.output = output.data
-				// output.data contains layout_id, layout_number, and a nested data array
-				const outputPositions = Array.isArray(output.data.data) ? output.data.data : (Array.isArray(output.data) ? output.data : [])
+			// output.data contains layout_id, layout_number, and a nested data array
+			// output.data contains layout_id, layout_number, and a layout array of positions
+			const outputPositions = Array.isArray(output.data.layout) ? output.data.layout : (Array.isArray(output.data.data) ? output.data.data : (Array.isArray(output.data) ? output.data : []))
 				for (let i = 0; i < outputPositions.length; i++) {
-					const pos = outputPositions[i]
-					const posIndex = pos.position != null ? pos.position : (pos.id != null ? pos.id - 1 : i)
+				const pos = outputPositions[i]
+				const posIndex = pos.position != null ? pos.position : (pos.id != null ? pos.id : i)
 					self.STATE['source_' + (posIndex + 1) + '_name'] = pos.name || ''
 					self.STATE['source_' + (posIndex + 1) + '_ip'] = pos.ip || ''
 					self.STATE['source_' + (posIndex + 1) + '_online'] = pos.online != null ? pos.online : (pos.ip && pos.ip.length > 0)
