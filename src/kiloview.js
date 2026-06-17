@@ -1,5 +1,7 @@
 const http = require('http')
 
+const API_PREFIX = '/api/r1'
+
 class cuber1Device {
 	connection_info = {
 		ip: '',
@@ -96,7 +98,7 @@ class cuber1Device {
 		try {
 			const { username, password } = this.connection_info
 
-			const result = await this._request('POST', '/users/login.json', {
+			const result = await this._request('POST', `${API_PREFIX}/users/login.json`, {
 				username: username,
 				password: password,
 			})
@@ -107,9 +109,12 @@ class cuber1Device {
 				throw error
 			}
 
-			// Build auth string from login response data
+			// Build auth string from login response - only username and token
 			if (result.data) {
-				this.auth_string = JSON.stringify(result.data)
+				this.auth_string = JSON.stringify({
+					username: result.data.username,
+				token: result.data.token,
+				})
 			}
 
 			this.authorized = true
@@ -160,269 +165,269 @@ class cuber1Device {
 	// ===== System APIs =====
 
 	async getHostname() {
-		return await this.authGet('/system/getHostname.json')
+		return await this.authGet(`${API_PREFIX}/system/getHostname.json`)
 	}
 
 	async setHostname(hostname) {
-		return await this.authPost('/system/setHostname.json', { hostname })
+		return await this.authPost(`${API_PREFIX}/system/setHostname.json`, { hostname })
 	}
 
 	async getTimeZone() {
-		return await this.authGet('/system/getTimeZone.json')
+		return await this.authGet(`${API_PREFIX}/system/getTimeZone.json`)
 	}
 
 	async setTimeZone(timezone, offset) {
-		return await this.authPost('/system/setTimeZone.json', { timezone, offset })
+		return await this.authPost(`${API_PREFIX}/system/setTimeZone.json`, { timezone, offset })
 	}
 
 	async reboot() {
-		return await this.authGet('/system/reboot')
+		return await this.authGet(`${API_PREFIX}/system/reboot`)
 	}
 
 	async getSystemInfo() {
-		return await this.authGet('/api/systemctrl/report/get_system_info')
+		return await this.authGet(`${API_PREFIX}/performance/getSys.json`)
 	}
 
 	async getNetworkInfo() {
-		return await this.authGet('/api/networkmanager/report/get_network')
+		return await this.authGet(`${API_PREFIX}/network/getNet.json`)
 	}
 
 	// ===== Layout APIs =====
 
 	async getLayoutList() {
-		return await this.authGet('/layout/icon.json')
+		return await this.authGet(`${API_PREFIX}/layout/icon.json`)
 	}
 
 	async setLayout(layout_id) {
-		return await this.authPost('/layout/setLayout.json', { layout_id })
+		return await this.authPost(`${API_PREFIX}/layout/setLayout.json`, { layout_id })
 	}
 
 	// ===== Output (Source Assignment) APIs =====
 
 	async getOutput() {
-		return await this.authGet('/output/get.json')
+		return await this.authGet(`${API_PREFIX}/output/get.json`)
 	}
 
 	async setSource(params) {
-		return await this.authPost('/output/setSource.json', params)
+		return await this.authPost(`${API_PREFIX}/output/setSource.json`, params)
 	}
 
 	async removeSource(position) {
-		return await this.authPost('/output/remove.json', { position })
+		return await this.authPost(`${API_PREFIX}/output/remove.json`, { position })
 	}
 
 	async removeAllSources() {
-		return await this.authPost('/output/deleteAll.json', {})
+		return await this.authPost(`${API_PREFIX}/output/deleteAll.json`, {})
 	}
 
 	async setChannelName(position, name) {
-		return await this.authPost('/output/setName.json', { position, name })
+		return await this.authPost(`${API_PREFIX}/output/setName.json`, { position, name })
 	}
 
 	// ===== Recording APIs =====
 
 	async getRecStatus() {
-		return await this.authGet('/record/getRecStatus.json')
+		return await this.authGet(`${API_PREFIX}/record/getRecStatus.json`)
 	}
 
 	async setRecStatus(isRecording) {
-		return await this.authPost('/record/setRecStatus.json', { isRecording })
+		return await this.authPost(`${API_PREFIX}/record/setRecStatus.json`, { isRecording })
 	}
 
 	async getRecInfo() {
-		return await this.authGet('/record/getinfo.json')
+		return await this.authGet(`${API_PREFIX}/record/getinfo.json`)
 	}
 
 	async setRecInfo(params) {
-		return await this.authPost('/record/setinfo.json', params)
+		return await this.authPost(`${API_PREFIX}/record/setinfo.json`, params)
 	}
 
 	async getRecordMode() {
-		return await this.authGet('/record/getMode')
+		return await this.authGet(`${API_PREFIX}/record/getMode`)
 	}
 
 	async setRecordMode(data) {
-		return await this.authPost('/record/setMode', { data })
+		return await this.authPost(`${API_PREFIX}/record/setMode`, { data })
 	}
 
 	async setSingleRec(id, data) {
-		return await this.authPost('/record/setSingleRec', { id, data })
+		return await this.authPost(`${API_PREFIX}/record/setSingleRec`, { id, data })
 	}
 
 	async getLinIns() {
-		return await this.authGet('/record/getLinIns')
+		return await this.authGet(`${API_PREFIX}/record/getLinIns`)
 	}
 
 	async setLinIns(data) {
-		return await this.authPost('/record/setLinIns', { data })
+		return await this.authPost(`${API_PREFIX}/record/setLinIns`, { data })
 	}
 
 	async setLinIn(pos, value) {
-		return await this.authPost('/record/setLinIn', { pos, value })
+		return await this.authPost(`${API_PREFIX}/record/setLinIn`, { pos, value })
 	}
 
 	async setLinInDelay(data) {
-		return await this.authPost('/record/setLinInDelay', { data })
+		return await this.authPost(`${API_PREFIX}/record/setLinInDelay`, { data })
 	}
 
 	async getLinInDelay() {
-		return await this.authGet('/record/getLinInDelay')
+		return await this.authGet(`${API_PREFIX}/record/getLinInDelay`)
 	}
 
 	// ===== Source Discovery APIs =====
 
 	async getSourceList() {
-		return await this.authGet('/source/list.json')
+		return await this.authGet(`${API_PREFIX}/source/list.json`)
 	}
 
 	async addSource(params) {
-		return await this.authPost('/source/add.json', params)
+		return await this.authPost(`${API_PREFIX}/source/add.json`, params)
 	}
 
 	async getSourceParam() {
-		return await this.authGet('/source/get_param.json')
+		return await this.authGet(`${API_PREFIX}/source/get_param.json`)
 	}
 
 	async modifySource(params) {
-		return await this.authPost('/source/modify.json', params)
+		return await this.authPost(`${API_PREFIX}/source/modify.json`, params)
 	}
 
 	async removeSourceGroup(disc_id) {
-		return await this.authPost('/source/remove.json', { disc_id })
+		return await this.authPost(`${API_PREFIX}/source/remove.json`, { disc_id })
 	}
 
 	async refreshSources() {
-		return await this.authPost('/source/refresh.json', { refresh: true })
+		return await this.authPost(`${API_PREFIX}/source/refresh.json`, { refresh: true })
 	}
 
 	async setSourceListSorting(data) {
-		return await this.authPost('/source/setSourceListSorting', { data })
+		return await this.authPost(`${API_PREFIX}/source/setSourceListSorting`, { data })
 	}
 
 	async getSourceListSorting() {
-		return await this.authGet('/source/getSourceListSorting')
+		return await this.authGet(`${API_PREFIX}/source/getSourceListSorting`)
 	}
 
 	// ===== Storage APIs =====
 
 	async setStorageConfig(params) {
-		return await this.authPost('/storage/setStoLimit.json', params)
+		return await this.authPost(`${API_PREFIX}/storage/setStoLimit.json`, params)
 	}
 
 	async getStorageInfo() {
-		return await this.authGet('/storage/getStoInfo.json')
+		return await this.authGet(`${API_PREFIX}/storage/getStoInfo.json`)
 	}
 
 	async formatDisk(data) {
-		return await this.authGet(`/storage/formatDisk?data=${data}`)
+		return await this.authGet(`${API_PREFIX}/storage/formatDisk?data=${data}`)
 	}
 
 	// NAS
 	async getNasList() {
-		return await this.authGet('/storage/nas/get')
+		return await this.authGet(`${API_PREFIX}/storage/nas/get`)
 	}
 
 	async addNas(params) {
-		return await this.authPost('/storage/nas/add', params)
+		return await this.authPost(`${API_PREFIX}/storage/nas/add`, params)
 	}
 
 	async updateNas(params) {
-		return await this.authPost('/storage/nas/update', params)
+		return await this.authPost(`${API_PREFIX}/storage/nas/update`, params)
 	}
 
 	async deleteNas(nasid) {
-		return await this.authPost('/storage/nas/delete', { nasid })
+		return await this.authPost(`${API_PREFIX}/storage/nas/delete`, { nasid })
 	}
 
 	// FTP
 	async addFtpServer(params) {
-		return await this.authPost('/storage/ftp/addFtp', params)
+		return await this.authPost(`${API_PREFIX}/storage/ftp/addFtp`, params)
 	}
 
 	async getFtpList() {
-		return await this.authGet('/storage/ftp/getFtpList')
+		return await this.authGet(`${API_PREFIX}/storage/ftp/getFtpList`)
 	}
 
 	async updateFtpServer(params) {
-		return await this.authPost('/storage/ftp/updateFtp', params)
+		return await this.authPost(`${API_PREFIX}/storage/ftp/updateFtp`, params)
 	}
 
 	async deleteFtpServer(data) {
-		return await this.authPost('/storage/ftp/delFtp', { data })
+		return await this.authPost(`${API_PREFIX}/storage/ftp/delFtp`, { data })
 	}
 
 	async addFtpUpload(params) {
-		return await this.authPost('/storage/ftp/addUpload', params)
+		return await this.authPost(`${API_PREFIX}/storage/ftp/addUpload`, params)
 	}
 
 	async getFtpUploadStatus() {
-		return await this.authGet('/storage/ftp/getUpload')
+		return await this.authGet(`${API_PREFIX}/storage/ftp/getUpload`)
 	}
 
 	async reUpload(id) {
-		return await this.authPost('/storage/ftp/reUpload', { id })
+		return await this.authPost(`${API_PREFIX}/storage/ftp/reUpload`, { id })
 	}
 
 	async cancelFtpUpload(id) {
-		return await this.authPost('/storage/ftp/requestCancel', { id })
+		return await this.authPost(`${API_PREFIX}/storage/ftp/requestCancel`, { id })
 	}
 
 	async cancelAllFtpUploads() {
-		return await this.authGet('/storage/ftp/requestCancelAll')
+		return await this.authGet(`${API_PREFIX}/storage/ftp/requestCancelAll`)
 	}
 
 	// ===== Recording Status (New API) =====
 
 	async getRecordingStatus() {
-		return await this.authGet('/api/record/recording/get_recording_status')
+		return await this.authGet(`${API_PREFIX}/record/getRecStatus.json`)
 	}
 
 	async getRecordSettings() {
-		return await this.authGet('/api/record/report/get_settings')
+		return await this.authGet(`${API_PREFIX}/record/getinfo.json`)
 	}
 
 	async getStorageReportInfo() {
-		return await this.authGet('/api/record/report/get_storage_info')
+		return await this.authGet(`${API_PREFIX}/storage/getStoInfo.json`)
 	}
 
 	async getOutputReport() {
-		return await this.authGet('/api/record/report/get_output')
+		return await this.authGet(`${API_PREFIX}/output/get.json`)
 	}
 
 	// ===== Recording File APIs =====
 
 	async getSessionFilePaths() {
-		return await this.authGet('/record/getSessionFilePaths.json')
+		return await this.authGet(`${API_PREFIX}/record/getSessionFilePaths.json`)
 	}
 
 	// ===== Playback APIs =====
 
 	async getPlayListInfo(params) {
-		return await this.authPost('/playback/getPlayListInfo.json', params)
+		return await this.authPost(`${API_PREFIX}/playback/getPlayListInfo.json`, params)
 	}
 
 	async deleteVideo(videoSrc) {
-		return await this.authPost('/playback/remove.json', { videoSrc })
+		return await this.authPost(`${API_PREFIX}/playback/remove.json`, { videoSrc })
 	}
 
 	async getVideoInfo() {
-		return await this.authGet('/playback/getVideoInfo.json')
+		return await this.authGet(`${API_PREFIX}/playback/getVideoInfo.json`)
 	}
 
 	// ===== Performance / Config APIs =====
 
 	async getPerformance() {
-		return await this.authGet('/performance/getSys.json')
+		return await this.authGet(`${API_PREFIX}/performance/getSys.json`)
 	}
 
 	async getGeneralConfig() {
-		return await this.authGet('/config/general/get.json')
+		return await this.authGet(`${API_PREFIX}/config/general/get.json`)
 	}
 
 	// ===== Firmware APIs =====
 
 	async getFirmwareInfo() {
-		return await this.authGet('/firmware/get.json')
+		return await this.authGet(`${API_PREFIX}/firmware/get.json`)
 	}
 }
 

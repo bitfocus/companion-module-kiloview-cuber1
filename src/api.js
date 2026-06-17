@@ -124,21 +124,17 @@ module.exports = {
 		}
 
 		try {
-			const layoutResult = await self.DEVICE.getLayoutList()
-			if (layoutResult && layoutResult.result === 'ok' && layoutResult.data) {
-				const layouts = layoutResult.data
-				if (Array.isArray(layouts)) {
-					const currentLayout = layouts.find((l) => l.current === true)
-					if (currentLayout) {
-						if (self.STATE.layout_id !== currentLayout.id) {
-							self.STATE.layout_id = currentLayout.id
-							self.STATE.layout_number = currentLayout.number || currentLayout.id
-							self.initActions()
-							self.initFeedbacks()
-							self.initVariables()
-							self.initPresets()
-						}
-					}
+			const outputResult = await self.DEVICE.getOutput()
+			if (outputResult && outputResult.result === 'ok' && outputResult.data) {
+				const newLayoutId = outputResult.data.layout_id
+				const newLayoutNumber = outputResult.data.layout_number
+				if (newLayoutId && self.STATE.layout_id !== newLayoutId) {
+					self.STATE.layout_id = newLayoutId
+					self.STATE.layout_number = newLayoutNumber || newLayoutId
+					self.initActions()
+					self.initFeedbacks()
+					self.initVariables()
+					self.initPresets()
 				}
 			}
 			self.updateStatus(InstanceStatus.Ok)
@@ -151,8 +147,8 @@ module.exports = {
 
 		try {
 			const hostname = await self.DEVICE.getHostname()
-			if (hostname && hostname.result === 'ok') {
-				self.STATE.hostname = hostname.data || ''
+			if (hostname && hostname.result === 'ok' && hostname.data) {
+				self.STATE.hostname = hostname.data.hostname || ''
 			}
 		} catch (e) {
 			if (self.config.verbose) {
@@ -163,14 +159,11 @@ module.exports = {
 		try {
 			const systemInfo = await self.DEVICE.getSystemInfo()
 			if (systemInfo && systemInfo.data) {
-				self.STATE.product = systemInfo.data.version?.product || ''
-				self.STATE.serial_number = systemInfo.data.version?.serialNumber || ''
-				self.STATE.firmware_version = systemInfo.data.version?.softwareVersion || ''
-				self.STATE.cpu_usage = systemInfo.data.cpu?.precent || ''
-				self.STATE.gpu_usage = systemInfo.data.gpu?.precent || ''
-				self.STATE.memory_used = systemInfo.data.mem?.used || ''
-				self.STATE.memory_total = systemInfo.data.mem?.total || ''
-				self.STATE.temperature = systemInfo.data.temperature || ''
+				self.STATE.cpu_usage = systemInfo.data.cpu != null ? Math.round(systemInfo.data.cpu) : ''
+				self.STATE.gpu_usage = systemInfo.data.gpu != null ? systemInfo.data.gpu : ''
+				self.STATE.memory_used = systemInfo.data.mem_use || ''
+				self.STATE.memory_total = systemInfo.data.mem_total || ''
+				self.STATE.temperature = systemInfo.data.temp != null ? systemInfo.data.temp + '°C' : ''
 			}
 		} catch (e) {
 			if (self.config.verbose) {
@@ -179,10 +172,22 @@ module.exports = {
 		}
 
 		try {
+			const firmwareInfo = await self.DEVICE.getFirmwareInfo()
+			if (firmwareInfo && firmwareInfo.data) {
+				self.STATE.firmware_version = firmwareInfo.data.softwareVersion || ''
+				self.STATE.product = firmwareInfo.data.product || ''
+			}
+		} catch (e) {
+			if (self.config.verbose) {
+				self.log('debug', 'Error getting firmware info: ' + e.message)
+			}
+		}
+
+		try {
 			const recStatus = await self.DEVICE.getRecStatus()
 			if (recStatus && recStatus.data) {
 				self.STATE.recording = recStatus.data.isRecording || false
-				self.STATE.saving = recStatus.data.isSaving || false
+				self.STATE.saving = recStatus.data.is_saving || false
 			}
 		} catch (e) {
 			if (self.config.verbose) {
@@ -205,15 +210,15 @@ module.exports = {
 			const output = await self.DEVICE.getOutput()
 			if (output && output.data) {
 				self.STATE.output = output.data
-				// Update position states
-				if (Array.isArray(output.data)) {
-					for (let i = 0; i < output.data.length; i++) {
-						const pos = output.data[i]
-						self.STATE['source_' + (pos.position + 1) + '_name'] = pos.name || ''
-						self.STATE['source_' + (pos.position + 1) + '_ip'] = pos.ip || ''
-						self.STATE['source_' + (pos.position + 1) + '_online'] = pos.online || false
-						self.STATE['channel_' + (pos.position + 1) + '_name'] = pos.channelName || ''
-					}
+				// output.data contains layout_id, layout_number, and a nested data array
+				const outputPositions = Array.isArray(output.data.data) ? output.data.data : (Array.isArray(output.data) ? output.data : [])
+				for (let i = 0; i < outputPositions.length; i++) {
+					const pos = outputPositions[i]
+					const posIndex = pos.position != null ? pos.position : (pos.id != null ? pos.id - 1 : i)
+					self.STATE['source_' + (posIndex + 1) + '_name'] = pos.name || ''
+					self.STATE['source_' + (posIndex + 1) + '_ip'] = pos.ip || ''
+					self.STATE['source_' + (posIndex + 1) + '_online'] = pos.online != null ? pos.online : (pos.ip && pos.ip.length > 0)
+					self.STATE['channel_' + (posIndex + 1) + '_name'] = pos.stream_name || pos.channelName || ''
 				}
 			}
 		} catch (e) {
