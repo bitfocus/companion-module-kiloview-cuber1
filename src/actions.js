@@ -3,6 +3,29 @@ module.exports = {
 		let self = this
 		let actions = {}
 
+		const buildSourceParams = (sourceChoice, position) => {
+			if (!sourceChoice || sourceChoice.id === 'null') {
+				return null
+			}
+
+			try {
+				let sourceData = JSON.parse(sourceChoice.id)
+				return {
+					type: sourceData.type || 'display',
+					stream_id: sourceData.stream_id || '',
+					position: parseInt(position),
+					ip: sourceData.ip || '',
+					disc_id: sourceData.disc_id || '',
+					disc_name: sourceData.disc_name || '',
+					server_on: !!sourceData.server_on,
+					server_ip: sourceData.server_ip || '',
+				}
+			} catch (error) {
+				self.log('error', 'Failed to parse selected NDI source: ' + error.message)
+				return null
+			}
+		}
+
 		// ===== General Actions =====
 		actions.setLayout = {
 			name: 'Set Layout',
@@ -93,38 +116,41 @@ module.exports = {
 					default: self.CHOICES_SOURCES[0].id,
 					choices: self.CHOICES_SOURCES,
 				},
-				{
-					type: 'textinput',
-					label: 'Channel Name',
-					id: 'channel_name',
-					default: '',
-				},
 			],
 			callback: async function (action) {
 				let options = action.options
 				let source = self.CHOICES_SOURCES.find((s) => s.id === options.source_id)
-				if (source && source.id !== 'null') {
-					let params = {
-						type: 0,
-						position: parseInt(options.position),
-						disc_id: parseInt(source.id),
-						disc_name: source.label,
-						ip: source.url,
-					}
-					if (options.channel_name) {
-						params.stream_id = options.channel_name
-					}
-					await self.DEVICE.setSource(params)
-				} else if (source) {
-					// Manual IP source
-					let params = {
-						type: 1,
-						position: parseInt(options.position),
-						ip: source.url,
-						disc_name: source.label,
-					}
-					await self.DEVICE.setSource(params)
+				let params = buildSourceParams(source, options.position)
+
+				if (!params) {
+					return
 				}
+
+				await self.DEVICE.setSource(params)
+			},
+		}
+
+		actions.setFirstSource = {
+			name: 'Set First Discovered Source',
+			options: [
+				{
+					type: 'dropdown',
+					label: 'Position',
+					id: 'position',
+					default: 0,
+					choices: self.CHOICES_POSITIONS_9,
+				},
+			],
+			callback: async function (action) {
+				let options = action.options
+				let firstSource = self.CHOICES_SOURCES.find((s) => s.id !== 'null')
+				let params = buildSourceParams(firstSource, options.position)
+
+				if (!params) {
+					return
+				}
+
+				await self.DEVICE.setSource(params)
 			},
 		}
 
@@ -245,14 +271,14 @@ module.exports = {
 		actions.startRecording = {
 			name: 'Start All Recording',
 			callback: async function (action) {
-				await self.DEVICE.setRecStatus(1)
+				await self.DEVICE.setRecStatus(true)
 			},
 		}
 
 		actions.stopRecording = {
 			name: 'Stop All Recording',
 			callback: async function (action) {
-				await self.DEVICE.setRecStatus(0)
+				await self.DEVICE.setRecStatus(false)
 			},
 		}
 
@@ -260,9 +286,9 @@ module.exports = {
 			name: 'Toggle All Recording',
 			callback: async function (action) {
 				if (self.STATE.recording) {
-					await self.DEVICE.setRecStatus(0)
+					await self.DEVICE.setRecStatus(false)
 				} else {
-					await self.DEVICE.setRecStatus(1)
+					await self.DEVICE.setRecStatus(true)
 				}
 			},
 		}

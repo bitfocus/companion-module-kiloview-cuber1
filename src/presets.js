@@ -341,6 +341,111 @@ module.exports = {
 			],
 		})
 
+		if (self.CHOICES_SOURCES.length > 0 && self.CHOICES_SOURCES[0].id !== 'null') {
+			const defaultSource = self.CHOICES_SOURCES[0]
+			presets.push({
+				category: 'Source',
+				type: 'button',
+				name: `Set CH1: ${defaultSource.label}`,
+				style: {
+					text: 'Set\nCH1',
+					size: '14',
+					color: colorWhite,
+					bgcolor: colorGreen,
+				},
+				steps: [
+					{
+						down: [
+							{
+								actionId: 'setSource',
+								options: {
+									position: 0,
+									source_id: defaultSource.id,
+								},
+							},
+						],
+						up: [],
+					},
+				],
+			})
+
+			presets.push({
+				category: 'Source',
+				type: 'button',
+				name: `Set CH2: ${defaultSource.label}`,
+				style: {
+					text: 'Set\nCH2',
+					size: '14',
+					color: colorWhite,
+					bgcolor: colorGreen,
+				},
+				steps: [
+					{
+						down: [
+							{
+								actionId: 'setSource',
+								options: {
+									position: 1,
+									source_id: defaultSource.id,
+								},
+							},
+						],
+						up: [],
+					},
+				],
+			})
+		}
+
+		presets.push({
+			category: 'Source',
+			type: 'button',
+			name: 'Set First Source to CH1',
+			style: {
+				text: 'First\n-> CH1',
+				size: '14',
+				color: colorWhite,
+				bgcolor: colorGreen,
+			},
+			steps: [
+				{
+					down: [
+						{
+							actionId: 'setFirstSource',
+							options: {
+								position: 0,
+							},
+						},
+					],
+					up: [],
+				},
+			],
+		})
+
+		presets.push({
+			category: 'Source',
+			type: 'button',
+			name: 'Set First Source to CH2',
+			style: {
+				text: 'First\n-> CH2',
+				size: '14',
+				color: colorWhite,
+				bgcolor: colorGreen,
+			},
+			steps: [
+				{
+					down: [
+						{
+							actionId: 'setFirstSource',
+							options: {
+								position: 1,
+							},
+						},
+					],
+					up: [],
+				},
+			],
+		})
+
 		presets.push({
 			category: 'Source',
 			type: 'button',
@@ -356,6 +461,31 @@ module.exports = {
 					down: [
 						{
 							actionId: 'removeAllSources',
+						},
+					],
+					up: [],
+				},
+			],
+		})
+
+		presets.push({
+			category: 'Recording',
+			type: 'button',
+			name: 'Set CH1 Single Rec',
+			style: {
+				text: 'CH1\nSingle',
+				size: '14',
+				color: colorWhite,
+				bgcolor: colorOrange,
+			},
+			steps: [
+				{
+					down: [
+						{
+							actionId: 'startSingleRec',
+							options: {
+								position: 0,
+							},
 						},
 					],
 					up: [],

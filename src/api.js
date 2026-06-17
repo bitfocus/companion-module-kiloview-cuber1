@@ -104,7 +104,7 @@ module.exports = {
 
 		if (self.config.polling) {
 			if (self.config.pollingrate_sources === undefined || self.config.pollingrate_sources < 1000) {
-				self.config.pollingrate_resources = 10000
+				self.config.pollingrate_sources = 10000
 			}
 
 			self.INTERVAL_SOURCES = setInterval(
@@ -245,23 +245,44 @@ module.exports = {
 			const sources = await self.DEVICE.getSourceList()
 
 			if (sources && sources.data && Array.isArray(sources.data)) {
-				sources.data.forEach((source) => {
-					if (source.disc_name) {
+				sources.data.forEach((group) => {
+					const groupSources = Array.isArray(group.sources) ? group.sources : []
+					const discId = group.disc_id != null ? String(group.disc_id) : ''
+					const discName = group.disc_name || ''
+					const serverOn = !!group.server_on
+					const serverIp = group.server_ip || ''
+
+					groupSources.forEach((source) => {
+						const streamId = source.id || source.name || ''
+						const streamName = source.name || streamId
+						const sourceIp = source.ip || ''
+
+						if (!streamId || !sourceIp) {
+							return
+						}
+
 						sourcesArray.push({
-							id: String(source.disc_id),
-							url: source.ip || '',
-							label: source.disc_name,
+							id: JSON.stringify({
+								type: 'display',
+								disc_id: discId,
+								disc_name: discName,
+								server_on: serverOn,
+								server_ip: serverIp,
+								stream_id: streamId,
+								ip: sourceIp,
+							}),
+							label: `${discName || 'Unknown Group'} - ${streamName} (${sourceIp})`,
 						})
-					}
+					})
 				})
 			}
 
 			if (sourcesArray.length === 0) {
-				sourcesArray = [{ id: 'null', url: '', label: '- No sources available -' }]
+				sourcesArray = [{ id: 'null', label: '- No sources available -' }]
 			}
 		} catch (e) {
 			self.log('error', 'Error getting sources: ' + e.message)
-			sourcesArray = [{ id: 'null', url: '', label: '- No sources available -' }]
+			sourcesArray = [{ id: 'null', label: '- No sources available -' }]
 		}
 
 		if (JSON.stringify(self.CHOICES_SOURCES) !== JSON.stringify(sourcesArray)) {
