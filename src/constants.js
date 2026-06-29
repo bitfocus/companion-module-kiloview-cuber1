@@ -53,8 +53,8 @@ module.exports = {
 	],
 
 	CHOICES_SOURCE_TYPE: [
-		{ id: 0, label: 'NDI Discovery' },
-		{ id: 1, label: 'Manual IP' },
+		{ id: 'Auto', label: 'NDI Discovery' },
+		{ id: 'Manual', label: 'Manual IP' },
 	],
 
 	CHOICES_RECORD_FORMAT: [
@@ -69,8 +69,8 @@ module.exports = {
 	],
 
 	CHOICES_DISK: [
-		{ id: 'ssd1', label: 'SSD1' },
-		{ id: 'ssd2', label: 'SSD2' },
+		{ id: '0', label: 'SSD1' },
+		{ id: '1', label: 'SSD2' },
 	],
 
 	CHOICES_NAS_TYPE: [

@@ -3,6 +3,24 @@ module.exports = {
 		let self = this
 		let actions = {}
 
+		const splitList = (value) => {
+			if (Array.isArray(value)) {
+				return value
+			}
+			return String(value || '')
+				.split(',')
+				.map((item) => item.trim())
+				.filter((item) => item.length > 0)
+		}
+
+		const logErrorResult = (actionName, result) => {
+			if (result && result.result === 'error') {
+				self.log('error', `${actionName} failed: ${result.msg || 'Device rejected the request'}`)
+				return true
+			}
+			return false
+		}
+
 		const buildSourceParams = (sourceChoice, position) => {
 			if (!sourceChoice || sourceChoice.id === 'null') {
 				return null
@@ -245,13 +263,25 @@ module.exports = {
 			],
 			callback: async function (action) {
 				let options = action.options
+				const discType = options.disc_type || 'Auto'
+				const groups = splitList(options.group)
 				let params = {
 					disc_name: options.disc_name,
-					disc_type: parseInt(options.disc_type),
-					ip: options.ip,
+					disc_type: discType,
+					group: groups,
 				}
-				if (options.group) params.group = options.group
-				await self.DEVICE.addSource(params)
+
+				if (discType === 'Manual') {
+					params.ip = splitList(options.ip)
+				} else {
+					params.discovery_enable = true
+					params.discovery_ip = options.ip || ''
+				}
+
+				const result = await self.DEVICE.addSource(params)
+				if (!logErrorResult('Add NDI Source', result)) {
+					await self.checkSources()
+				}
 			},
 		}
 
@@ -268,7 +298,10 @@ module.exports = {
 			],
 			callback: async function (action) {
 				let options = action.options
-				await self.DEVICE.removeSourceGroup(parseInt(options.disc_id))
+				const result = await self.DEVICE.removeSourceGroup(String(options.disc_id))
+				if (!logErrorResult('Remove NDI Source Group', result)) {
+					await self.checkSources()
+				}
 			},
 		}
 
@@ -404,7 +437,8 @@ module.exports = {
 			],
 			callback: async function (action) {
 				let options = action.options
-				await self.DEVICE.formatDisk(options.disk)
+				const result = await self.DEVICE.formatDisk(options.disk)
+				logErrorResult('Format Disk', result)
 			},
 		}
 

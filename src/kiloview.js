@@ -304,7 +304,7 @@ class cuber1Device {
 	}
 
 	async removeSourceGroup(disc_id) {
-		return await this.authPost(`${API_PREFIX}/source/remove.json`, { disc_id })
+		return await this.authPost(`${API_PREFIX}/source/remove.json`, { disc_id: String(disc_id) })
 	}
 
 	async refreshSources() {
@@ -330,7 +330,7 @@ class cuber1Device {
 	}
 
 	async formatDisk(data) {
-		return await this.authGet(`${API_PREFIX}/storage/formatDisk?data=${data}`)
+		return await this.authPost(`${API_PREFIX}/storage/formatDisk`, { data: String(data) })
 	}
 
 	// NAS
