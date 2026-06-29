@@ -49,7 +49,7 @@ class cuber1Device {
 				agent: this.httpAgent,
 				headers: {
 					'Content-Type': 'application/json',
-					'Connection': 'keep-alive',
+					Connection: 'keep-alive',
 				},
 			}
 
@@ -113,7 +113,7 @@ class cuber1Device {
 			if (result.data) {
 				this.auth_string = JSON.stringify({
 					username: result.data.username,
-				token: result.data.token,
+					token: result.data.token,
 				})
 			}
 
@@ -139,7 +139,7 @@ class cuber1Device {
 
 		let result = await this._request('GET', fullPath)
 
-		if (result && (result.result === 'error' && result.msg === 'Token_Error')) {
+		if (result && result.result === 'error' && result.msg === 'Token_Error') {
 			await this.authorize()
 			return this.authGet(url, params)
 		}
@@ -154,7 +154,7 @@ class cuber1Device {
 
 		let result = await this._request('POST', url, data)
 
-		if (result && (result.result === 'error' && result.msg === 'Token_Error')) {
+		if (result && result.result === 'error' && result.msg === 'Token_Error') {
 			await this.authorize()
 			return this.authPost(url, data)
 		}
@@ -198,8 +198,19 @@ class cuber1Device {
 		return await this.authGet(`${API_PREFIX}/layout/icon.json`)
 	}
 
-	async setLayout(layout_id) {
-		return await this.authPost(`${API_PREFIX}/layout/setLayout.json`, { layout_id })
+	async setLayout(layout_id, layout_number) {
+		const layoutNumberById = {
+			1: 1,
+			2: 4,
+			3: 9,
+		}
+		const parsedLayoutId = parseInt(layout_id)
+		const parsedLayoutNumber = layout_number != null ? parseInt(layout_number) : layoutNumberById[parsedLayoutId]
+
+		return await this.authPost(`${API_PREFIX}/layout/setLayout.json`, {
+			layout_id: parsedLayoutId,
+			layout_number: parsedLayoutNumber,
+		})
 	}
 
 	// ===== Output (Source Assignment) APIs =====

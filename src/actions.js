@@ -40,7 +40,12 @@ module.exports = {
 			],
 			callback: async function (action) {
 				let options = action.options
-				await self.DEVICE.setLayout(options.layout_id)
+				const result = await self.DEVICE.setLayout(options.layout_id)
+				if (result && result.result === 'error') {
+					self.log('error', `Set Layout failed: ${result.msg || 'Device rejected the layout request'}`)
+					return
+				}
+				await self.checkState()
 			},
 		}
 
@@ -315,7 +320,7 @@ module.exports = {
 			options: [
 				{
 					type: 'dropdown',
-				label: 'Position',
+					label: 'Position',
 					id: 'position',
 					default: 0,
 					choices: self.CHOICES_POSITIONS_9,
