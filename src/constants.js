@@ -1,18 +1,24 @@
+const createInitialSourceChoices = () => [{ id: 'null', url: '', label: '- No sources available -' }]
+
+const createInitialState = () => ({
+	mode: 'N/A',
+	layout_id: 1,
+	recording: false,
+	saving: false,
+	record_mode: 'N/A',
+})
+
 module.exports = {
 	POLLINGRATE: 1000,
 	POLLINGRATE_SOURCES: 10000,
 	RECONNECT_TIME: 30000,
 	DEVICE: undefined,
 
-	CHOICES_SOURCES: [{ id: 'null', url: '', label: '- No sources available -' }],
+	createInitialSourceChoices,
+	CHOICES_SOURCES: createInitialSourceChoices(),
 
-	STATE: {
-		mode: 'N/A',
-		layout_id: 1,
-		recording: false,
-		saving: false,
-		record_mode: 'N/A',
-	},
+	createInitialState,
+	STATE: createInitialState(),
 
 	CHOICES_LAYOUTS: [
 		{ id: 1, label: '1 Split (Single)' },
