@@ -1,97 +1,141 @@
-const createInitialSourceChoices = () => [{ id: 'null', url: '', label: '- No sources available -' }]
+const PLACEHOLDER_SOURCE = { id: 0, label: '- No sources discovered -' }
+const PLACEHOLDER_DISK = { id: 0, label: '- No disks available -' }
 
-const createInitialState = () => ({
-	mode: 'N/A',
-	layout_id: 1,
-	recording: false,
-	saving: false,
-	record_mode: 'N/A',
-})
+// The R1 API reserves project_id and documents it as "always 1".
+const PROJECT_ID = 1
 
-module.exports = {
+// The device ships 1 / 4 / 9 split layouts. The real list is read from /layout/icon.json once
+// connected; these are the defaults offered while the device is unreachable so buttons can be
+// configured offline.
+const DEFAULT_LAYOUTS = [
+	{ id: 1, number: 1 },
+	{ id: 2, number: 4 },
+	{ id: 3, number: 9 },
+]
+
+// Largest documented multiview grid. The window count actually offered grows if the device
+// reports a bigger layout.
+const MAX_WINDOWS = 9
+
+// The device has two SSD bays. Disk variables are always defined for at least this many so
+// presets referencing DISK2 resolve before the first storage poll.
+const MIN_DISKS = 2
+
+function createDefaultState() {
+	return {
+		layouts: DEFAULT_LAYOUTS.map((layout) => ({ ...layout })),
+		layouts_from_device: false,
+		layout_id: null,
+		layout_number: null,
+		windows: [],
+		sources: [],
+		recording: false,
+		record_start_time: null,
+		record_msg: '',
+		record_info: null,
+		storage: null,
+		performance: null,
+		network: [],
+		hostname: '',
+		software_version: '',
+		firmware_version: '',
+	}
+}
+
+function createDefaultChoiceSets() {
+	return {
+		CHOICES_SOURCES: [{ ...PLACEHOLDER_SOURCE }],
+		CHOICES_DISKS: [{ ...PLACEHOLDER_DISK }],
+	}
+}
+
+export default {
 	POLLINGRATE: 1000,
-	POLLINGRATE_SOURCES: 10000,
+	POLLINGRATE_MAX: 60000,
+	POLLINGRATE_RESOURCES: 10000,
+	POLLINGRATE_RESOURCES_MAX: 600000,
 	RECONNECT_TIME: 30000,
-	DEVICE: undefined,
+	LOGOUT_TIMEOUT: 1500,
+	AUTH_RETRY_MAX: 3,
+	REQUEST_TIMEOUT_DEFAULT: 5000,
+	REQUEST_BODY_MAX_BYTES: 10 * 1024 * 1024,
+	POLL_ERROR_WARNING_THRESHOLD: 3,
+	PROJECT_ID,
+	DEFAULT_LAYOUTS,
+	MAX_WINDOWS,
+	MIN_DISKS,
+	PLACEHOLDER_SOURCE,
+	PLACEHOLDER_DISK,
+	createDefaultState,
+	createDefaultChoiceSets,
 
-	createInitialSourceChoices,
-	CHOICES_SOURCES: createInitialSourceChoices(),
-
-	createInitialState,
-	STATE: createInitialState(),
-
-	CHOICES_LAYOUTS: [
-		{ id: 1, label: '1 Split (Single)' },
-		{ id: 2, label: '4 Split' },
-		{ id: 3, label: '9 Split' },
+	CHOICES_RECORD_MODE: [
+		{ id: 'start', label: 'Start Recording' },
+		{ id: 'stop', label: 'Stop Recording' },
+		{ id: 'toggle', label: 'Toggle Recording' },
 	],
 
-	CHOICES_POSITIONS_1: [{ id: 0, label: 'Position 1' }],
-
-	CHOICES_POSITIONS_4: [
-		{ id: 0, label: 'Position 1' },
-		{ id: 1, label: 'Position 2' },
-		{ id: 2, label: 'Position 3' },
-		{ id: 3, label: 'Position 4' },
+	CHOICES_TRANSCODING: [
+		{ id: 0, label: 'Native (same as source)' },
+		{ id: 1, label: 'H.264' },
+		{ id: 2, label: 'H.265' },
 	],
 
-	CHOICES_POSITIONS_9: [
-		{ id: 0, label: 'Position 1' },
-		{ id: 1, label: 'Position 2' },
-		{ id: 2, label: 'Position 3' },
-		{ id: 3, label: 'Position 4' },
-		{ id: 4, label: 'Position 5' },
-		{ id: 5, label: 'Position 6' },
-		{ id: 6, label: 'Position 7' },
-		{ id: 7, label: 'Position 8' },
-		{ id: 8, label: 'Position 9' },
+	CHOICES_ON_OFF_TOGGLE: [
+		{ id: 'on', label: 'On' },
+		{ id: 'off', label: 'Off' },
+		{ id: 'toggle', label: 'Toggle' },
 	],
 
-	CHOICES_RECORD_MODES: [
-		{ id: 0, label: 'Record Mode' },
-		{ id: 1, label: 'Director Mode' },
+	CHOICES_SCHEDULE_TARGET: [
+		{ id: 'start', label: 'Scheduled Start' },
+		{ id: 'stop', label: 'Scheduled Stop' },
 	],
 
-	CHOICES_SOURCE_TYPE: [
-		{ id: 'Auto', label: 'NDI Discovery' },
-		{ id: 'Manual', label: 'Manual IP' },
+	CHOICES_WINDOW_DISPLAY_TARGET: [
+		{ id: 'video', label: 'Video' },
+		{ id: 'audio', label: 'Audio Meter' },
+		{ id: 'both', label: 'Video and Audio Meter' },
 	],
 
-	CHOICES_RECORD_FORMAT: [
-		{ id: 'mov', label: 'MOV' },
-		{ id: 'mp4', label: 'MP4' },
+	CHOICES_SHOW_HIDE_TOGGLE: [
+		{ id: 'show', label: 'Show' },
+		{ id: 'hide', label: 'Hide' },
+		{ id: 'toggle', label: 'Toggle' },
 	],
 
-	CHOICES_SOURCE_LIST_SORTING: [
-		{ id: 0, label: 'Default' },
-		{ id: 1, label: 'By Name' },
-		{ id: 2, label: 'By IP' },
+	CHOICES_SHOW_HIDE: [
+		{ id: 'show', label: 'Show' },
+		{ id: 'hide', label: 'Hide' },
 	],
 
-	CHOICES_DISK: [
-		{ id: '0', label: 'SSD1' },
-		{ id: '1', label: 'SSD2' },
+	CHOICES_MUTE_MODE: [
+		{ id: 'mute', label: 'Mute' },
+		{ id: 'unmute', label: 'Unmute' },
+		{ id: 'toggle', label: 'Toggle' },
 	],
 
-	CHOICES_NAS_TYPE: [
-		{ id: 0, label: 'SMB' },
-		{ id: 1, label: 'NFS' },
+	CHOICES_SHOWN_HIDDEN: [
+		{ id: 'shown', label: 'Shown' },
+		{ id: 'hidden', label: 'Hidden' },
 	],
 
-	CHOICES_LIMIT_TYPE: [
-		{ id: 0, label: 'No Limit' },
-		{ id: 1, label: 'Time Limit' },
-		{ id: 2, label: 'Size Limit' },
+	CHOICES_NTP_STATE: [
+		{ id: 'sync', label: 'Synchronized' },
+		{ id: 'unsync', label: 'Not Synchronized' },
+		{ id: 'error', label: 'Synchronization Error' },
 	],
 
-	CHOICES_RECORD_MODE_TYPE: [
-		{ id: 0, label: 'Local' },
-		{ id: 1, label: 'Backup' },
-		{ id: 2, label: 'Dual' },
-		{ id: 3, label: 'NAS' },
+	CHOICES_SPLIT_TYPE: [
+		{ id: 'size', label: 'By File Size' },
+		{ id: 'time', label: 'By Duration' },
 	],
 
-	INTERVAL: null,
-	INTERVAL_SOURCES: null,
-	RECONNECT_INTERVAL: null,
+	CHOICES_DISK_STATE: [
+		{ id: 'online', label: 'Online' },
+		{ id: 'offline', label: 'Offline' },
+		{ id: 'unlocked', label: 'Unlocked' },
+		{ id: 'locked', label: 'Locked' },
+		{ id: 'recording', label: 'Recording' },
+	],
 }

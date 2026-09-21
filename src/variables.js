@@ -1,68 +1,123 @@
-function formatUptime(uptime) {
-	if (!uptime || isNaN(uptime)) {
+function pad2(value) {
+	return String(value).padStart(2, '0')
+}
+
+function formatDuration(milliseconds) {
+	if (!Number.isFinite(milliseconds) || milliseconds < 0) {
 		return ''
 	}
 
-	const totalSeconds = Math.floor(uptime)
-	const days = Math.floor(totalSeconds / 86400)
-	const remainingSeconds = totalSeconds % 86400
-	const hours = Math.floor(remainingSeconds / 3600)
-	const minutes = Math.floor((remainingSeconds % 3600) / 60)
-	const seconds = remainingSeconds % 60
+	const totalSeconds = Math.floor(milliseconds / 1000)
+	const hours = Math.floor(totalSeconds / 3600)
+	const minutes = Math.floor((totalSeconds % 3600) / 60)
+	const seconds = totalSeconds % 60
 
-	const hoursStr = hours.toString().padStart(2, '0')
-	const minutesStr = minutes.toString().padStart(2, '0')
-	const secondsStr = seconds.toString().padStart(2, '0')
-	if (days > 0) {
-		return `${days} Days ${hoursStr}:${minutesStr}:${secondsStr}`
-	}
-
-	return `${hoursStr}:${minutesStr}:${secondsStr}`
+	return `${pad2(hours)}:${pad2(minutes)}:${pad2(seconds)}`
 }
 
-module.exports = {
+function formatTimestamp(milliseconds) {
+	if (!Number.isFinite(milliseconds) || milliseconds <= 0) {
+		return ''
+	}
+
+	const date = new Date(milliseconds)
+	if (Number.isNaN(date.getTime())) {
+		return ''
+	}
+
+	return `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())} ${pad2(date.getHours())}:${pad2(date.getMinutes())}:${pad2(date.getSeconds())}`
+}
+
+function formatBitrate(bits) {
+	const value = parseFloat(bits)
+	if (!Number.isFinite(value)) {
+		return ''
+	}
+
+	if (value >= 1000000) {
+		return `${(value / 1000000).toFixed(1)} Mbps`
+	}
+
+	return `${Math.round(value / 1000)} kbps`
+}
+
+function yesNo(value) {
+	return value ? 'True' : 'False'
+}
+
+export default {
 	initVariables() {
 		let self = this
-		let variables = []
+		let variables = {}
 
-		// System variables
-		variables.push({ variableId: 'hostname', name: 'Device Hostname' })
-		variables.push({ variableId: 'product', name: 'Product Type' })
-		variables.push({ variableId: 'serial_number', name: 'Device Serial Number' })
-		variables.push({ variableId: 'firmware_version', name: 'Firmware Version' })
+		// Device
+		variables.hostname = { name: 'Device Hostname' }
+		variables.software_version = { name: 'Software Version' }
+		variables.firmware_version = { name: 'Firmware Version' }
+		variables.ip_address = { name: 'IP Address (first active interface)' }
+		variables.cpu = { name: 'CPU Usage (%)' }
+		variables.gpu = { name: 'GPU Usage (%)' }
+		variables.temperature_c = { name: 'CPU Temperature (Celsius)' }
+		variables.temperature_f = { name: 'CPU Temperature (Fahrenheit)' }
+		variables.memory = { name: 'Memory Usage (%)' }
+		variables.memory_used = { name: 'Memory Used (MB)' }
+		variables.memory_total = { name: 'Memory Total (MB)' }
+		variables.net_up = { name: 'Network Upload Speed (KB/s)' }
+		variables.net_down = { name: 'Network Download Speed (KB/s)' }
 
-		// Layout variables
-		variables.push({ variableId: 'layout', name: 'Current Layout (1/4/9)' })
-		variables.push({ variableId: 'layout_number', name: 'Number of Channels in Current Layout' })
+		// Recording
+		variables.recording = { name: 'Recording Active' }
+		variables.recording_start_time = { name: 'Recording Start Time' }
+		variables.recording_duration = { name: 'Recording Duration (HH:MM:SS)' }
+		variables.recording_message = { name: 'Recording Status Message' }
+		variables.transcoding = { name: 'Recording Transcoding Method' }
+		variables.force_time_sync = { name: 'Forced Time Synchronization' }
+		variables.scheduled_start_enabled = { name: 'Scheduled Recording Start Enabled' }
+		variables.scheduled_start_time = { name: 'Scheduled Recording Start Time' }
+		variables.scheduled_stop_enabled = { name: 'Scheduled Recording Stop Enabled' }
+		variables.scheduled_stop_time = { name: 'Scheduled Recording Stop Time' }
 
-		// Recording variables
-		variables.push({ variableId: 'recording', name: 'Recording Active' })
-		variables.push({ variableId: 'saving', name: 'Saving in Progress' })
-		variables.push({ variableId: 'record_mode', name: 'Current Record Mode' })
+		// Layout
+		variables.layout_id = { name: 'Current Layout ID' }
+		variables.layout_number = { name: 'Current Layout Window Count' }
 
-		// Performance variables
-		variables.push({ variableId: 'cpu_usage', name: 'CPU Usage' })
-		variables.push({ variableId: 'gpu_usage', name: 'GPU Usage' })
-		variables.push({ variableId: 'memory_used', name: 'Memory Used' })
-		variables.push({ variableId: 'memory_total', name: 'Memory Total' })
-		variables.push({ variableId: 'temperature', name: 'Temperature' })
-		variables.push({ variableId: 'uptime', name: 'Device Uptime' })
+		// Sources
+		variables.source_count = { name: 'Number of Discovered NDI Sources' }
 
-		// Per-position source variables (1-9)
-		for (let i = 1; i <= 9; i++) {
-			variables.push({ variableId: `source_${i}_name`, name: `Position ${i} Source Name` })
-			variables.push({ variableId: `source_${i}_ip`, name: `Position ${i} Source IP` })
-			variables.push({ variableId: `source_${i}_online`, name: `Position ${i} Source Online` })
-			variables.push({ variableId: `channel_${i}_name`, name: `Position ${i} Channel Name` })
+		// Per-window
+		const windowCount = self.getWindowCount()
+		for (let idx = 1; idx <= windowCount; idx++) {
+			variables[`window_${idx}_name`] = { name: `Window ${idx} Name` }
+			variables[`window_${idx}_source`] = { name: `Window ${idx} Source Name` }
+			variables[`window_${idx}_source_ip`] = { name: `Window ${idx} Source IP` }
+			variables[`window_${idx}_bitrate`] = { name: `Window ${idx} Bitrate` }
+			variables[`window_${idx}_ntp`] = { name: `Window ${idx} NTP State` }
+			variables[`window_${idx}_audio`] = { name: `Window ${idx} Audio On` }
+			variables[`window_${idx}_video_shown`] = { name: `Window ${idx} Video Shown` }
+			variables[`window_${idx}_audio_meter_shown`] = { name: `Window ${idx} Audio Meter Shown` }
 		}
 
-		// Storage variables
-		for (let i = 1; i <= 2; i++) {
-			variables.push({ variableId: `ssd${i}_usage`, name: `SSD${i} Usage` })
-			variables.push({ variableId: `ssd${i}_total`, name: `SSD${i} Total Size` })
-			variables.push({ variableId: `ssd${i}_free`, name: `SSD${i} Free Space` })
+		// Storage
+		variables.start_disk = { name: 'Start Disk' }
+		variables.file_split_type = { name: 'Recording File Split Rule' }
+		variables.file_split_size = { name: 'Recording File Size Limit (GB)' }
+		variables.file_split_time = { name: 'Recording File Duration Limit (minutes)' }
+
+		const diskCount = Math.max(self.MIN_DISKS, self.getDisks().length)
+		for (let idx = 1; idx <= diskCount; idx++) {
+			variables[`disk_${idx}_name`] = { name: `Disk ${idx} Name` }
+			variables[`disk_${idx}_state`] = { name: `Disk ${idx} State` }
+			variables[`disk_${idx}_unlocked`] = { name: `Disk ${idx} Unlocked` }
+			variables[`disk_${idx}_recording`] = { name: `Disk ${idx} Recording` }
+			variables[`disk_${idx}_total`] = { name: `Disk ${idx} Total Capacity` }
+			variables[`disk_${idx}_used`] = { name: `Disk ${idx} Used Capacity` }
+			variables[`disk_${idx}_usage`] = { name: `Disk ${idx} Usage (%)` }
+			variables[`disk_${idx}_speed`] = { name: `Disk ${idx} Write Speed` }
+			variables[`disk_${idx}_message`] = { name: `Disk ${idx} Message` }
 		}
 
+		// Definitions were rebuilt, so the next checkVariables() must resend every value.
+		self.LAST_VARIABLE_VALUES = null
 		self.setVariableDefinitions(variables)
 	},
 
@@ -72,50 +127,158 @@ module.exports = {
 		try {
 			let variableObj = {}
 
-			// System
+			// Device
 			variableObj.hostname = self.STATE.hostname || ''
-			variableObj.product = self.STATE.product || ''
-			variableObj.serial_number = self.STATE.serial_number || ''
+			variableObj.software_version = self.STATE.software_version || ''
 			variableObj.firmware_version = self.STATE.firmware_version || ''
 
-			// Layout
-			const layoutLabels = { 1: '1 Split', 2: '4 Split', 3: '9 Split' }
-			variableObj.layout = layoutLabels[self.STATE.layout_id] || 'N/A'
-			variableObj.layout_number = self.STATE.layout_number || ''
+			const activeInterface = self.STATE.network.find(
+				(iface) => iface.state === 'up' && iface.ip && iface.ip !== '0.0.0.0',
+			)
+			variableObj.ip_address = activeInterface?.ip || ''
+
+			const perf = self.STATE.performance
+			variableObj.cpu = ''
+			variableObj.gpu = ''
+			variableObj.temperature_c = ''
+			variableObj.temperature_f = ''
+			variableObj.memory = ''
+			variableObj.memory_used = ''
+			variableObj.memory_total = ''
+			variableObj.net_up = ''
+			variableObj.net_down = ''
+
+			if (perf) {
+				const cpu = parseFloat(perf.cpu)
+				const gpu = parseFloat(perf.gpu)
+				const temp = parseFloat(perf.temp)
+				const memUse = parseFloat(perf.mem_use)
+				const memTotal = parseFloat(perf.mem_total)
+
+				variableObj.cpu = Number.isFinite(cpu) ? Math.round(cpu) + '%' : ''
+				variableObj.gpu = Number.isFinite(gpu) ? Math.round(gpu) + '%' : ''
+				variableObj.temperature_c = Number.isFinite(temp) ? Math.round(temp) + '°C' : ''
+				variableObj.temperature_f = Number.isFinite(temp) ? Math.round((temp * 9) / 5 + 32) + '°F' : ''
+				variableObj.memory_used = Number.isFinite(memUse) ? Math.round(memUse) : ''
+				variableObj.memory_total = Number.isFinite(memTotal) ? Math.round(memTotal) : ''
+				variableObj.memory =
+					Number.isFinite(memUse) && Number.isFinite(memTotal) && memTotal > 0
+						? Math.round((memUse / memTotal) * 100) + '%'
+						: ''
+				variableObj.net_up = perf.net_up ?? ''
+				variableObj.net_down = perf.net_down ?? ''
+			}
 
 			// Recording
-			variableObj.recording = self.STATE.recording ? 'True' : 'False'
-			variableObj.saving = self.STATE.saving ? 'True' : 'False'
-			variableObj.record_mode = self.STATE.record_mode || 'N/A'
+			variableObj.recording = yesNo(self.STATE.recording)
+			variableObj.recording_message = self.STATE.record_msg || ''
+			variableObj.recording_start_time = ''
+			variableObj.recording_duration = ''
+			if (self.STATE.recording && self.STATE.record_start_time) {
+				variableObj.recording_start_time = formatTimestamp(self.STATE.record_start_time)
+				variableObj.recording_duration = formatDuration(Date.now() - self.STATE.record_start_time)
+			}
 
-			// Performance
-			variableObj.cpu_usage = self.STATE.cpu_usage ? self.STATE.cpu_usage + '%' : ''
-			variableObj.gpu_usage = self.STATE.gpu_usage ? self.STATE.gpu_usage + '%' : ''
-			variableObj.memory_used = self.STATE.memory_used ? self.STATE.memory_used + 'KB' : ''
-			variableObj.memory_total = self.STATE.memory_total ? self.STATE.memory_total + 'KB' : ''
-			variableObj.temperature = self.STATE.temperature || ''
+			const info = self.STATE.record_info
+			variableObj.transcoding = ''
+			variableObj.force_time_sync = ''
+			variableObj.scheduled_start_enabled = ''
+			variableObj.scheduled_start_time = ''
+			variableObj.scheduled_stop_enabled = ''
+			variableObj.scheduled_stop_time = ''
+			if (info) {
+				const transcoding = self.CHOICES_TRANSCODING.find((choice) => choice.id === parseInt(info.solution))
+				variableObj.transcoding = transcoding?.label || ''
+				variableObj.force_time_sync = yesNo(info.sync === true)
+				variableObj.scheduled_start_enabled = yesNo(info.isStart === true)
+				variableObj.scheduled_start_time = info.startTime || ''
+				variableObj.scheduled_stop_enabled = yesNo(info.isStop === true)
+				variableObj.scheduled_stop_time = info.stopTime || ''
+			}
 
-			// Per-position source variables
-			for (let i = 1; i <= 9; i++) {
-				variableObj[`source_${i}_name`] = self.STATE[`source_${i}_name`] || ''
-				variableObj[`source_${i}_ip`] = self.STATE[`source_${i}_ip`] || ''
-				variableObj[`source_${i}_online`] = self.STATE[`source_${i}_online`] ? 'True' : 'False'
-				variableObj[`channel_${i}_name`] = self.STATE[`channel_${i}_name`] || ''
+			// Layout
+			variableObj.layout_id = self.STATE.layout_id ?? ''
+			variableObj.layout_number = self.STATE.layout_number ?? ''
+
+			// Sources
+			variableObj.source_count = self.STATE.sources.length
+
+			// Per-window
+			const windowCount = self.getWindowCount()
+			for (let idx = 1; idx <= windowCount; idx++) {
+				const window = self.getWindow(idx)
+
+				variableObj[`window_${idx}_name`] = window?.name || ''
+				variableObj[`window_${idx}_source`] = ''
+				variableObj[`window_${idx}_source_ip`] = ''
+				variableObj[`window_${idx}_bitrate`] = ''
+				variableObj[`window_${idx}_ntp`] = ''
+				variableObj[`window_${idx}_audio`] = ''
+				variableObj[`window_${idx}_video_shown`] = ''
+				variableObj[`window_${idx}_audio_meter_shown`] = ''
+
+				if (!window) {
+					continue
+				}
+
+				if (self.windowHasSource(window)) {
+					const streamId = String(window.stream_id ?? window.stream_name)
+					const source = self.getSourceById(streamId)
+					variableObj[`window_${idx}_source`] = window.stream_name || source?.name || streamId
+					variableObj[`window_${idx}_source_ip`] = source?.ip || ''
+					variableObj[`window_${idx}_bitrate`] = formatBitrate(window.bit_rate)
+				}
+
+				variableObj[`window_${idx}_ntp`] = window.ntp_state || ''
+				variableObj[`window_${idx}_audio`] =
+					window.volume === 'on' || window.volume === 'off' ? yesNo(window.volume === 'on') : ''
+				variableObj[`window_${idx}_video_shown`] = yesNo(window.showVideo === true)
+				variableObj[`window_${idx}_audio_meter_shown`] = yesNo(window.showVolume === true)
 			}
 
 			// Storage
-			if (self.STATE.storage) {
-				for (let i = 1; i <= 2; i++) {
-					const disk = self.STATE.storage[`ssd${i}`]
-					if (disk) {
-						variableObj[`ssd${i}_usage`] = disk.usage || ''
-						variableObj[`ssd${i}_total`] = disk.total || ''
-						variableObj[`ssd${i}_free`] = disk.free || ''
+			const storage = self.STATE.storage
+			const disks = self.getDisks()
+			const startDisk = storage ? disks.find((disk) => String(disk.id) === String(storage.choose)) : undefined
+			variableObj.start_disk = startDisk?.name || (storage?.choose !== undefined ? String(storage.choose) : '')
+
+			const splitType = self.CHOICES_SPLIT_TYPE.find((choice) => choice.id === storage?.limitType)
+			variableObj.file_split_type = splitType?.label || ''
+			variableObj.file_split_size = storage?.limitSize ?? ''
+			variableObj.file_split_time = storage?.limitTime ?? ''
+
+			const diskCount = Math.max(self.MIN_DISKS, disks.length)
+			for (let idx = 1; idx <= diskCount; idx++) {
+				const disk = disks[idx - 1]
+
+				variableObj[`disk_${idx}_name`] = disk?.name || ''
+				variableObj[`disk_${idx}_state`] = disk?.state || ''
+				variableObj[`disk_${idx}_unlocked`] = disk ? yesNo(disk.unlock === true) : ''
+				variableObj[`disk_${idx}_recording`] = disk ? yesNo(disk.recoding === true || disk.recording === true) : ''
+				variableObj[`disk_${idx}_total`] = disk?.total || ''
+				variableObj[`disk_${idx}_used`] = disk?.used || ''
+				variableObj[`disk_${idx}_usage`] = disk?.rate !== undefined && disk?.rate !== null ? disk.rate + '%' : ''
+				variableObj[`disk_${idx}_speed`] = disk?.speed ?? ''
+				variableObj[`disk_${idx}_message`] = disk?.msg || ''
+			}
+
+			// Only push what changed; the state poll runs every second and nearly all of these
+			// values are static between polls.
+			const previous = self.LAST_VARIABLE_VALUES
+			let changed = variableObj
+			if (previous) {
+				changed = {}
+				for (const [key, value] of Object.entries(variableObj)) {
+					if (previous[key] !== value) {
+						changed[key] = value
 					}
 				}
 			}
 
-			self.setVariableValues(variableObj)
+			self.LAST_VARIABLE_VALUES = variableObj
+			if (Object.keys(changed).length > 0) {
+				self.setVariableValues(changed)
+			}
 		} catch (error) {
 			self.log('error', 'Error setting Variables: ' + String(error))
 		}

@@ -1,101 +1,110 @@
 # Kiloview CUBE R1
 
-This module will allow you to control Kiloview CUBE R1 multi-channel NDI recorder devices.
+This module controls the Kiloview CUBE R1 NDI High Bandwidth + NDI|HX Multi-Channel Recording System using its HTTP API. It supports starting and stopping recording, switching the 1/4/9 multiview layout, assigning discovered NDI sources to windows, per-window audio and video controls, storage settings and device status monitoring.
 
 ## Configuration
 
-- **Device IP / Host** — Enter the IP address or hostname of the device
-- **Port** — Connection port (default: 80)
-- **Use Authentication** — Enable/disable login credentials
-- **Username / Password** — Device login credentials (default: admin/admin)
-- **Default Layout** — Initial layout selection (1/4/9 split)
+- **Device IP / Host** — Enter the IP address or hostname of the CUBE R1
+- **Protocol** — HTTP (port: 80) or HTTPS (port: 443). The CUBE R1 web interface is served over HTTP on port 80 by default
+- **Port** — Connection port (defaults to 80 for HTTP, 443 for HTTPS)
+- **Username / Password** — Device login credentials. The factory defaults are `admin` / `admin`. The module logs in again automatically if the device session expires
 - **Enable Polling** — Enable polling for feedbacks and variables (recommended: enabled)
-- **Polling Rate** — Configurable interval for state polling (in ms)
-- **Polling Rate for Sources** — Configurable interval for NDI source list polling (in ms)
+- **Polling Rates** — Configurable intervals for the recording/window state and for sources, storage and system info
+- **HTTP Request Timeout** — How long to wait for the device to answer a request
 - **Verbose Logging** — Enable debug-level logging for troubleshooting
 
 ## Actions
 
-### General Actions
-- **Set Layout** — Switch between 1/4/9 split layouts
-- **Refresh Device Status** — Manually trigger a status refresh
-- **Reboot Device** — Reboot the CUBE R1 device
-- **Set Hostname** — Change device hostname
-- **Set Time Zone** — Change device time zone
+### Recording
 
-### Source Actions
-- **Set Source** — Assign an NDI source to a specific position
-- **Remove Source** — Remove NDI source from a position
-- **Remove All Sources** — Remove all NDI sources from all positions
-- **Set Channel Name** — Rename a channel on a specific position
-- **Refresh Source List** — Manually refresh the NDI source discovery
-- **Add Source** — Add a new NDI source group manually
-- **Remove Source Group** — Remove an NDI source group
-- **Modify Source Group** — Modify an existing NDI source group
+- **Recording: Start / Stop Recording** — Start, stop or toggle recording of all windows in the current layout. The disk latch must be locked before the device will start recording
+- **Recording: Set Transcoding Method** — Record natively (same encoding as the source), or transcode to H.264 / H.265
+- **Recording: Set Forced Time Synchronization** — Enable, disable or toggle forced time synchronization of recordings
+- **Recording: Set Scheduled Start / Stop** — Enable or disable a scheduled recording start or stop time (`YYYY-MM-DD HH:MM:SS`, supports variables)
 
-### Recording Actions
-- **Start/Stop All Recording** — Start or stop recording on all channels
-- **Start/Stop Single Recording** — Start or stop recording on a specific channel
-- **Set Recording Info** — Configure recording settings (timed, file format, etc.)
-- **Set Record Mode** — Switch between Record mode and Director mode
-- **Set Audio Line-In** — Enable/disable line-in for a specific recording channel
-- **Set All Audio Line-In** — Set line-in audio for multiple channels at once
-- **Set Audio Line-In Delay** — Set line-in audio delay value
+### Layout
 
-### Storage Actions
-- **Set Storage Config** — Configure storage settings (record mode, backup, NAS)
-- **Format Disk** — Format SSD1 or SSD2
-- **Add NAS** — Add a NAS storage target
-- **Update NAS** — Modify NAS connection settings
-- **Delete NAS** — Remove a NAS storage target
-- **Add FTP Server** — Add an FTP upload server
-- **Update FTP Server** — Modify FTP server settings
-- **Delete FTP Server** — Remove an FTP server
-- **Upload to FTP** — Start FTP upload of files
-- **Re-upload to FTP** — Retry a failed FTP upload
-- **Cancel FTP Upload** — Cancel a specific FTP upload
-- **Cancel All FTP Uploads** — Cancel all FTP uploads
+- **Layout: Set Layout** — Switch the multiview between the 1 / 4 / 9 split layouts
 
-### Playback Actions
-- **Get Playlist** — Retrieve playlist info for a channel/time range
-- **Delete Recording** — Delete specified recording files
+### Windows
+
+- **Window: Set Source for Window** — Assign a discovered NDI source to a window (or remove the source)
+- **Window: Remove Source from Window** — Remove the NDI source from a window
+- **Window: Remove Sources from All Windows** — Clear every window of the current layout
+- **Window: Set Window Name** — Rename a window (supports variables)
+- **Window: Show / Hide Window Video / Audio Meter** — Show, hide or toggle the video and/or audio meter of a window on the multiview
+- **Window: Mute / Unmute Window Audio** — Mute, unmute or toggle the monitoring audio of a window
+- **Window: Show / Hide All Windows** — Show or hide the video of every window in the current layout
+
+### Sources
+
+- **Sources: Refresh Source Discovery** — Ask the device to rescan the network for NDI sources
+
+### Storage
+
+- **Storage: Set Start Disk** — Select the disk new recordings are written to first
+- **Storage: Set Recording File Split Rule** — Split recordings into files by size (GB) or by duration (minutes)
+
+### System
+
+- **System: Set Hostname** — Change the device hostname (supports variables)
+- **System: Synchronize Time Now** — Trigger a one-off time synchronization
+- **System: Refresh Device Status** — Manually trigger a status refresh
 
 ## Feedbacks
 
-- **Layout** — Change button color based on current layout (1/4/9 split)
-- **Recording Status** — Change button color based on whether recording is active
-- **Source Online** — Change button color based on whether a source is connected on a specific position
-- **Record Mode** — Change button color based on current record mode (Record/Director)
+- **Recording: Recording is Active** — Active while the device is recording
+- **Recording: Transcoding Method is Selected** — Active when the selected transcoding method is configured
+- **Layout: Layout is Active** — Active when the selected layout is the current multiview layout
+- **Window: Window has Source** — Active when the selected window has the selected (or any) NDI source assigned
+- **Window: Window has No Source** — Active when the selected window is empty
+- **Window: Window Audio is Muted** — Active when the monitoring audio of the selected window is off
+- **Window: Window Video / Audio Meter is Shown or Hidden** — Based on the display state of the window's video or audio meter
+- **Window: Window NTP State** — Based on the NTP synchronization state of the source in the selected window
+- **Sources: Source is Discovered** — Active when the selected NDI source is currently in the discovery list
+- **Storage: Disk State** — Online / offline / unlocked / locked / recording state of the selected disk
+- **Storage: Disk Usage Above Threshold** — Active when the used percentage of the selected disk reaches the threshold
+- **Storage: Disk is the Start Disk** — Active when the selected disk is the start disk
 
 ## Variables
 
-### System
-- **hostname** — Device hostname
-- **firmware_version** — Firmware version
-- **serial_number** — Device serial number
-- **product** — Product name
-- **cpu_usage** — CPU usage percentage
-- **gpu_usage** — GPU usage percentage
-- **memory_used** — Used memory
-- **memory_total** — Total memory
-- **temperature** — Device temperature
-- **uptime** — Device uptime
+### Device
 
-### Layout
-- **layout** — Current layout (1/4/9)
-- **layout_number** — Number of channels in current layout
+- **Hostname / Software Version / Firmware Version / IP Address**
+- **CPU Usage / GPU Usage / CPU Temperature (°C/°F) / Memory Usage / Network Upload and Download Speed**
 
 ### Recording
-- **recording** — Whether recording is active (True/False)
-- **saving** — Whether saving is in progress (True/False)
-- **record_mode** — Current mode (Record/Director)
 
-### Sources (per position 1-9)
-- **source_N_name** — Source name at position N
-- **source_N_ip** — Source IP at position N
-- **source_N_online** — Whether source at position N is online
-- **channel_N_name** — Channel name at position N
+- **Recording Active / Start Time / Duration / Status Message**
+- **Transcoding Method / Forced Time Synchronization**
+- **Scheduled Start and Stop (enabled and time)**
+
+### Layout and Sources
+
+- **Current Layout ID / Window Count**
+- **Number of Discovered NDI Sources**
+
+### Per Window (window*N*...)
+
+- Name, source name, source IP, bitrate, NTP state, audio on, video shown, audio meter shown
 
 ### Storage
-- **ssd1_usage** — SSD1 usage percentage
-- **ssd2_usage** — SSD2 usage percentage
+
+- **Start Disk / File Split Rule / File Size Limit / File Duration Limit**
+- Per disk (disk*N*...): name, state, unlocked, recording, total, used, usage %, write speed, message
+
+## Presets
+
+- **General** — Refresh, Sync Time, Rescan Sources
+- **Recording** — Start, Stop, Toggle and Status buttons with recording feedback; transcoding method buttons
+- **Layout** — One button per layout with active-layout feedback
+- **Info** — Hostname, version, IP, CPU, memory, temperature, source count
+- **Window Sources** — One category per window with a button per discovered NDI source (with assignment feedback) and a remove button
+- **Windows** — Audio mute toggles, video toggles and current-source status per window
+- **Storage** — Disk status per disk (online / recording feedback) and start-disk selection
+
+Note: window source, window and storage presets are generated from the device once the module is connected. Reload the presets list after the first successful connection.
+
+## Notes
+
+- The module was written against the CUBE R1 HTTP API guide (2023.11). Recording control, layouts, window sources and status monitoring use only documented endpoints. If your firmware behaves differently, enable Verbose Logging and open an issue with the request/response log.

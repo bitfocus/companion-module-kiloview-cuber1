@@ -1,26 +1,28 @@
 {
+	"$schema": "../node_modules/@companion-module/base/assets/manifest.schema.json",
+	"type": "connection",
 	"id": "kiloview-cuber1",
-	"name": "Kiloview CUBE R1",
-	"shortname": "cuber1",
-	"description": "Module to control Kiloview CUBE R1 multi-channel NDI recorder devices with full API integration",
+	"name": "kiloview-cuber1",
+	"shortname": "CUBE R1",
+	"description": "Module to control the Kiloview CUBE R1 NDI High Bandwidth + NDI|HX Multi-Channel Recording System (recording, layouts, window sources, storage and system status)",
 	"version": "1.0.0",
 	"license": "MIT",
 	"repository": "git+https://github.com/bitfocus/companion-module-kiloview-cuber1.git",
 	"bugs": "https://github.com/bitfocus/companion-module-kiloview-cuber1/issues",
 	"maintainers": [
 		{
-			"name": "Larry",
-			"email": "068@kiloview.com"
+			"name": "nerif.tafu",
+			"email": "finn.rawles@hotmail.co.uk"
 		}
 	],
-	"legacyIds": [],
 	"runtime": {
-		"type": "node18",
+		"type": "node22",
 		"api": "nodejs-ipc",
 		"apiVersion": "0.0.0",
-		"entrypoint": "../index.js"
+		"entrypoint": "../src/main.js"
 	},
+	"legacyIds": [],
 	"manufacturer": "Kiloview",
 	"products": ["CUBE R1"],
-	"keywords": ["Kiloview", "CUBE R1", "NDI", "Multi-channel", "Recorder"]
+	"keywords": ["NDI", "Recorder", "Recording", "Multiview", "Video"]
 }

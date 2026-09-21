@@ -1,6 +1,4 @@
-const { Regex } = require('@companion-module/base')
-
-module.exports = {
+export default {
 	getConfigFields() {
 		let self = this
 
@@ -10,7 +8,8 @@ module.exports = {
 				id: 'info',
 				width: 12,
 				label: 'Information',
-				value: 'This module controls Kiloview CUBE R1 multi-channel NDI recorder devices.',
+				value:
+					'This module controls the Kiloview CUBE R1 multi-channel NDI recorder. It supports starting and stopping recording, switching the 1/4/9 multiview layout, assigning discovered NDI sources to windows, window audio/video controls, storage settings and device status monitoring.',
 			},
 			{
 				type: 'static-text',
@@ -25,15 +24,44 @@ module.exports = {
 				label: 'Device IP / Host',
 				width: 6,
 				default: '',
-				regex: Regex.HOSTNAME,
+				tooltip: 'IPv4 address, IPv6 address or hostname of the CUBE R1. Do not include the protocol or port.',
 			},
 			{
-				type: 'textinput',
+				type: 'dropdown',
+				id: 'protocol',
+				label: 'Protocol',
+				width: 3,
+				default: 'http',
+				choices: [
+					{ id: 'http', label: 'HTTP (port: 80)' },
+					{ id: 'https', label: 'HTTPS (port: 443)' },
+				],
+			},
+			{
+				type: 'number',
 				id: 'port',
 				label: 'Port',
 				width: 3,
-				default: '80',
-				regex: Regex.PORT,
+				default: 80,
+				min: 1,
+				max: 65535,
+			},
+			{
+				type: 'checkbox',
+				id: 'verify_tls',
+				label: 'Verify HTTPS Certificate',
+				default: false,
+				width: 3,
+				isVisibleExpression: '$(options:protocol) === "https"',
+			},
+			{
+				type: 'static-text',
+				id: 'tlsInfo',
+				width: 9,
+				label: ' ',
+				value:
+					'Leave certificate verification disabled for self-signed device certificates. Enable it only when the device presents a trusted certificate.',
+				isVisibleExpression: '$(options:protocol) === "https"',
 			},
 			{
 				type: 'static-text',
@@ -43,46 +71,30 @@ module.exports = {
 				value: '<hr />',
 			},
 			{
-				type: 'checkbox',
-				id: 'useAuth',
-				label: 'Use Authentication',
-				width: 6,
-				default: true,
-			},
-			{
 				type: 'textinput',
 				label: 'Username',
 				id: 'username',
 				width: 3,
 				default: 'admin',
-				isVisible: (configValues) => configValues.useAuth === true,
 			},
 			{
-				type: 'textinput',
+				type: 'secret-text',
 				label: 'Password',
 				id: 'password',
 				width: 3,
-				default: 'admin',
-				isVisible: (configValues) => configValues.useAuth === true,
+				default: '',
+			},
+			{
+				type: 'static-text',
+				id: 'authInfo',
+				width: 6,
+				label: ' ',
+				value:
+					'The CUBE R1 requires a valid user login. The module logs in again automatically if the session expires. The factory default username and password are admin / admin.',
 			},
 			{
 				type: 'static-text',
 				id: 'hr3',
-				width: 12,
-				label: ' ',
-				value: '<hr />',
-			},
-			{
-				type: 'dropdown',
-				id: 'layout',
-				label: 'Default Layout (if not known yet)',
-				width: 4,
-				default: self.CHOICES_LAYOUTS[0].id,
-				choices: self.CHOICES_LAYOUTS,
-			},
-			{
-				type: 'static-text',
-				id: 'hr4',
 				width: 12,
 				label: ' ',
 				value: '<hr />',
@@ -93,26 +105,40 @@ module.exports = {
 				label: 'Enable Polling (necessary for feedbacks and variables)',
 				default: true,
 				width: 3,
+				disableAutoExpression: true,
 			},
 			{
-				type: 'textinput',
+				type: 'number',
 				id: 'pollingrate',
-				label: 'Polling Rate for Current State (in ms)',
+				label: 'Polling Rate for Recording / Window State (in ms)',
 				default: self.POLLINGRATE,
 				width: 3,
-				isVisible: (configValues) => configValues.polling === true,
+				min: 500,
+				max: self.POLLINGRATE_MAX,
+				isVisibleExpression: '!!$(options:polling)',
 			},
 			{
-				type: 'textinput',
-				id: 'pollingrate_sources',
-				label: 'Polling Rate for NDI Sources (in ms)',
-				default: self.POLLINGRATE_SOURCES,
+				type: 'number',
+				id: 'pollingrate_resources',
+				label: 'Polling Rate for Sources / Storage / System Info (in ms)',
+				default: self.POLLINGRATE_RESOURCES,
 				width: 3,
-				isVisible: (configValues) => configValues.polling === true,
+				min: 1000,
+				max: self.POLLINGRATE_RESOURCES_MAX,
+				isVisibleExpression: '!!$(options:polling)',
+			},
+			{
+				type: 'number',
+				id: 'request_timeout',
+				label: 'HTTP Request Timeout (ms)',
+				default: self.REQUEST_TIMEOUT_DEFAULT,
+				width: 3,
+				min: 1000,
+				max: 60000,
 			},
 			{
 				type: 'static-text',
-				id: 'hr5',
+				id: 'hr4',
 				width: 12,
 				label: ' ',
 				value: '<hr />',
@@ -129,7 +155,8 @@ module.exports = {
 				id: 'verboseInfo',
 				width: 9,
 				label: ' ',
-				value: `Enabling Verbose Logging will push all incoming and outgoing data to the log, which is helpful for debugging.`,
+				value:
+					'Enabling Verbose Logging will push all incoming and outgoing HTTP requests to the log, which is helpful for debugging.',
 			},
 		]
 	},
