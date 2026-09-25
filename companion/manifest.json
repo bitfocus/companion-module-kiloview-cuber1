@@ -5,7 +5,7 @@
 	"name": "kiloview-cuber1",
 	"shortname": "CUBE R1",
 	"description": "Module to control the Kiloview CUBE R1 NDI High Bandwidth + NDI|HX Multi-Channel Recording System (recording, layouts, window sources, storage and system status)",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"license": "MIT",
 	"repository": "git+https://github.com/bitfocus/companion-module-kiloview-cuber1.git",
 	"bugs": "https://github.com/bitfocus/companion-module-kiloview-cuber1/issues",
