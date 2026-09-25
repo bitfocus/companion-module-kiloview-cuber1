@@ -11,24 +11,7 @@ import constants from '../src/constants.js'
 test('entry point exposes UpgradeScripts as a named export', () => {
 	assert.equal(typeof KiloviewR1Instance, 'function', 'default export must be the instance class')
 	assert.ok(Array.isArray(UpgradeScripts), 'UpgradeScripts must be a named export and an array')
-	assert.equal(UpgradeScripts.length, 1)
-})
-
-test('password migration moves a config password into secrets', () => {
-	const [migrate] = UpgradeScripts
-	const result = migrate({}, { config: { host: '1.2.3.4', password: 'hunter2' }, secrets: {} })
-
-	assert.equal(result.updatedSecrets.password, 'hunter2')
-	assert.equal(result.updatedConfig.password, undefined)
-	assert.equal(result.updatedConfig.host, '1.2.3.4', 'unrelated config must be preserved')
-})
-
-test('password migration is a no-op when there is nothing to migrate', () => {
-	const [migrate] = UpgradeScripts
-	const result = migrate({}, { config: { host: '1.2.3.4' }, secrets: {} })
-
-	assert.equal(result.updatedConfig, null)
-	assert.equal(result.updatedSecrets, null)
+	assert.equal(UpgradeScripts.length, 0, 'initial release ships no upgrade scripts')
 })
 
 function makeInstance() {
